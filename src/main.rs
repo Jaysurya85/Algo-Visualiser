@@ -7,6 +7,7 @@ enum Pattern {
     Digit,
     Character,
     CharacterGroup(String),
+    NegetiveCharacterGroup(String),
     Unknown,
 }
 
@@ -19,12 +20,22 @@ impl From<String> for Pattern {
         } else if string_pattern == "\\w" {
             return Pattern::Character;
         } else if string_pattern.starts_with("[") & string_pattern.ends_with("]") {
-            let actual_pattern = string_pattern
-                .to_string()
-                .trim_matches('[')
-                .trim_matches(']')
-                .to_string();
-            return Pattern::CharacterGroup(actual_pattern);
+            if let Some('^') = string_pattern.chars().nth(1) {
+                let actual_pattern = string_pattern
+                    .to_string()
+                    .trim_matches('[')
+                    .trim_matches('^')
+                    .trim_matches(']')
+                    .to_string();
+                return Pattern::NegetiveCharacterGroup(actual_pattern);
+            } else {
+                let actual_pattern = string_pattern
+                    .to_string()
+                    .trim_matches('[')
+                    .trim_matches(']')
+                    .to_string();
+                return Pattern::CharacterGroup(actual_pattern);
+            }
         } else {
             return Pattern::Unknown;
         }
@@ -51,12 +62,18 @@ fn match_character_group(input_line: &str, pattern: &str) -> bool {
     input_line.contains(|c: char| match_single_letter(pattern, c))
 }
 
+fn match_negetive_character_group(input_line: &str, pattern: &str) -> bool {
+    println!("checking for a negetive character group match");
+    !input_line.contains(|c: char| match_single_letter(pattern, c))
+}
+
 fn match_pattern(input_line: &str, pattern: Pattern) -> bool {
     return match pattern {
         Pattern::Single(s) => match_single_letter(input_line, s.chars().next().unwrap()),
         Pattern::Digit => match_digit(input_line),
         Pattern::Character => match_character(input_line),
         Pattern::CharacterGroup(s) => match_character_group(input_line, &s),
+        Pattern::NegetiveCharacterGroup(s) => match_negetive_character_group(input_line, &s),
         Pattern::Unknown => false,
     };
 }
