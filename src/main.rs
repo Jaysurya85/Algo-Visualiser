@@ -6,6 +6,7 @@ enum Pattern {
     Single(String),
     Digit,
     Character,
+    CharacterGroup(String),
     Unknown,
 }
 
@@ -17,41 +18,50 @@ impl From<String> for Pattern {
             return Pattern::Digit;
         } else if string_pattern == "\\w" {
             return Pattern::Character;
+        } else if string_pattern.contains("[") & string_pattern.contains("]") {
+            let actual_pattern = string_pattern
+                .chars()
+                .skip(1)
+                .take(string_pattern.chars().count() - 2)
+                .collect::<String>();
+            return Pattern::CharacterGroup(actual_pattern);
         } else {
             return Pattern::Unknown;
         }
     }
 }
 
-fn match_single_letter(input_line: &str, pattern: &str) -> bool {
-    println!("found a single character match");
+fn match_single_letter(input_line: &str, pattern: char) -> bool {
+    println!("checking for a single character match");
     input_line.contains(pattern)
 }
 
 fn match_digit(input_line: &str) -> bool {
-    println!("found a digit match");
+    println!("checking for a digit match");
     input_line.contains(|c: char| c.is_digit(10))
 }
 
 fn match_character(input_line: &str) -> bool {
-    println!("found a character match");
+    println!("checking for a character match");
     input_line.contains(|c: char| c.is_ascii_alphanumeric())
+}
+
+fn match_character_group(input_line: &str, pattern: &str) -> bool {
+    println!("checking for a character group match");
+    input_line.contains(|c: char| match_single_letter(pattern, c))
 }
 
 fn match_pattern(input_line: &str, pattern: Pattern) -> bool {
     return match pattern {
-        Pattern::Single(s) => match_single_letter(input_line, &s),
+        Pattern::Single(s) => match_single_letter(input_line, s.chars().next().unwrap()),
         Pattern::Digit => match_digit(input_line),
         Pattern::Character => match_character(input_line),
+        Pattern::CharacterGroup(s) => match_character_group(input_line, &s),
         Pattern::Unknown => false,
     };
 }
 
-// Usage: echo <input_text> | your_program.sh -E <pattern>
 fn main() {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    // println!("Logs from your program will appear here!");
-
     if env::args().nth(1).unwrap() != "-E" {
         println!("Expected first argument to be '-E'");
         process::exit(1);
@@ -64,10 +74,11 @@ fn main() {
 
     io::stdin().read_line(&mut input_line).unwrap();
 
-    // Uncomment this block to pass the first stage
     if match_pattern(&input_line, pattern) {
+        println!("True");
         process::exit(0)
     } else {
+        println!("False");
         process::exit(1)
     }
 }
