@@ -18,12 +18,12 @@ impl From<String> for Pattern {
             return Pattern::Digit;
         } else if string_pattern == "\\w" {
             return Pattern::Character;
-        } else if string_pattern.contains("[") & string_pattern.contains("]") {
+        } else if string_pattern.starts_with("[") & string_pattern.ends_with("]") {
             let actual_pattern = string_pattern
-                .chars()
-                .skip(1)
-                .take(string_pattern.chars().count() - 2)
-                .collect::<String>();
+                .to_string()
+                .trim_matches('[')
+                .trim_matches(']')
+                .to_string();
             return Pattern::CharacterGroup(actual_pattern);
         } else {
             return Pattern::Unknown;
